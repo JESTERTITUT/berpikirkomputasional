@@ -1,0 +1,879 @@
+<!DOCTYPE html>
+<html lang="id" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Berpikir Komputasional - Interactive Learning Portal</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        brand: {
+                            50: '#f0f9ff',
+                            100: '#e0f2fe',
+                            500: '#0284c7',
+                            600: '#0284c7',
+                            700: '#0369a1',
+                        },
+                        funky: {
+                            purple: '#8b5cf6',
+                            pink: '#ec4899',
+                            yellow: '#f59e0b',
+                            green: '#10b981',
+                            cyan: '#06b6d4',
+                        }
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                        display: ['Fredoka', 'Outfit', 'sans-serif']
+                    }
+                }
+            }
+        }
+    </script>
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Font Awesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            transition: background-color 0.3s, color 0.3s;
+        }
+        h1, h2, h3, .font-display {
+            font-family: 'Fredoka', cursive, sans-serif;
+        }
+        
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: rgba(0,0,0,0.05);
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 4px;
+        }
+        .dark ::-webkit-scrollbar-thumb {
+            background: #475569;
+        }
+
+        /* Glassmorphism utility */
+        .glass {
+            background: rgba(255, 255, 255, 0.85);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+        }
+        .dark .glass {
+            background: rgba(15, 23, 42, 0.85);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+        }
+
+        /* Animations */
+        @keyframes float {
+            0%, 100% { transform: translateY(0px) rotate(0deg); }
+            50% { transform: translateY(-10px) rotate(1deg); }
+        }
+        .animate-float {
+            animation: float 4s ease-in-out infinite;
+        }
+        @keyframes pulse-subtle {
+            0%, 100% { opacity: 1; transform: scale(1); }
+            50% { opacity: 0.9; transform: scale(1.02); }
+        }
+        .animate-pulse-subtle {
+            animation: pulse-subtle 3s ease-in-out infinite;
+        }
+
+        /* Canvas game styling */
+        #nodeCanvas {
+            touch-action: none;
+        }
+    </style>
+</head>
+<body class="bg-slate-50 text-slate-800 dark:bg-slate-900 dark:text-slate-100 min-h-screen flex flex-col justify-between selection:bg-brand-500 selection:text-white">
+
+    <!-- Navigation Bar -->
+    <header class="sticky top-0 z-50 glass border-b border-slate-200 dark:border-slate-800 transition-all duration-300">
+        <!-- Progress Bar Indicator -->
+        <div class="w-full bg-slate-200 dark:bg-slate-800 h-1.5">
+            <div id="overallProgressBar" class="bg-gradient-to-r from-brand-500 via-funky-purple to-funky-pink h-1.5 transition-all duration-500 w-0"></div>
+        </div>
+
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex items-center justify-between h-16">
+                <!-- Logo & Brand -->
+                <div class="flex items-center space-x-3 cursor-pointer" onclick="navigateTo('beranda')">
+                    <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-brand-500 to-funky-purple flex items-center justify-center text-white shadow-lg shadow-brand-500/30 transform hover:scale-105 transition">
+                        <i class="fa-solid fa-brain text-xl"></i>
+                    </div>
+                    <div>
+                        <span class="font-display font-bold text-xl tracking-wide bg-gradient-to-r from-brand-600 via-funky-purple to-funky-pink bg-clip-text text-transparent">COMPU-THINK</span>
+                        <span class="hidden sm:inline-block text-xs font-semibold px-2 py-0.5 ml-2 bg-brand-100 text-brand-700 dark:bg-brand-900/50 dark:text-brand-300 rounded-full">SMP Kelas 9</span>
+                    </div>
+                </div>
+
+                <!-- Desktop Navigation Links -->
+                <nav class="hidden md:flex items-center space-x-1 lg:space-x-2">
+                    <button onclick="navigateTo('beranda')" id="nav-beranda" class="nav-btn px-3 py-2 rounded-xl text-sm font-semibold transition hover:bg-slate-100 dark:hover:bg-slate-800 flex items-center gap-2">
+                        <i class="fa-solid fa-house text-brand-500"></i> Beranda
+                    </button>
+                    <button onclick="navigateTo('materi')" id="nav-materi" class="nav-btn px-3 py-2 rounded-xl text-sm font-semibold transition hover:bg-slate-100 dark:hover:bg-slate-800 flex items-center gap-2">
+                        <i class="fa-solid fa-book-open text-funky-purple"></i> Materi
+                    </button>
+                    <button onclick="navigateTo('galeri')" id="nav-galeri" class="nav-btn px-3 py-2 rounded-xl text-sm font-semibold transition hover:bg-slate-100 dark:hover:bg-slate-800 flex items-center gap-2">
+                        <i class="fa-solid fa-images text-funky-pink"></i> Galeri
+                    </button>
+                    <button onclick="navigateTo('game')" id="nav-game" class="nav-btn px-3 py-2 rounded-xl text-sm font-semibold transition hover:bg-slate-100 dark:hover:bg-slate-800 flex items-center gap-2">
+                        <i class="fa-solid fa-gamepad text-funky-yellow"></i> Simulasi & Game
+                    </button>
+                    <button onclick="navigateTo('tentang')" id="nav-tentang" class="nav-btn px-3 py-2 rounded-xl text-sm font-semibold transition hover:bg-slate-100 dark:hover:bg-slate-800 flex items-center gap-2">
+                        <i class="fa-solid fa-circle-info text-funky-green"></i> Tentang
+                    </button>
+                </nav>
+
+                <!-- Right Side Tools (Score Badges + Dark Mode) -->
+                <div class="flex items-center space-x-3">
+                    <!-- Total Score Display -->
+                    <div class="flex items-center gap-2 px-3 py-1.5 bg-amber-100 dark:bg-amber-900/40 text-amber-700 dark:text-amber-300 rounded-xl font-bold text-sm shadow-sm border border-amber-300/50">
+                        <i class="fa-solid fa-trophy text-amber-500 animate-bounce"></i>
+                        <span id="scoreDisplay">0 PTS</span>
+                    </div>
+
+                    <!-- Dark Mode Toggle -->
+                    <button id="themeToggle" onclick="toggleTheme()" class="p-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700 transition" title="Ganti Mode Gelap/Terang">
+                        <i id="themeIcon" class="fa-solid fa-moon"></i>
+                    </button>
+
+                    <!-- Mobile Menu Button -->
+                    <button onclick="toggleMobileMenu()" class="md:hidden p-2 rounded-xl text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800">
+                        <i class="fa-solid fa-bars text-xl"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Mobile Navigation Menu -->
+        <div id="mobileMenu" class="hidden md:hidden border-t border-slate-200 dark:border-slate-800 bg-white/95 dark:bg-slate-900/95 backdrop-blur-lg px-4 pt-2 pb-4 space-y-1">
+            <button onclick="navigateTo('beranda')" class="w-full text-left px-3 py-2.5 rounded-xl font-medium text-sm hover:bg-slate-100 dark:hover:bg-slate-800 flex items-center gap-3">
+                <i class="fa-solid fa-house text-brand-500 w-5"></i> Beranda
+            </button>
+            <button onclick="navigateTo('materi')" class="w-full text-left px-3 py-2.5 rounded-xl font-medium text-sm hover:bg-slate-100 dark:hover:bg-slate-800 flex items-center gap-3">
+                <i class="fa-solid fa-book-open text-funky-purple w-5"></i> Materi Pembelajaran
+            </button>
+            <button onclick="navigateTo('galeri')" class="w-full text-left px-3 py-2.5 rounded-xl font-medium text-sm hover:bg-slate-100 dark:hover:bg-slate-800 flex items-center gap-3">
+                <i class="fa-solid fa-images text-funky-pink w-5"></i> Galeri Infografis
+            </button>
+            <button onclick="navigateTo('game')" class="w-full text-left px-3 py-2.5 rounded-xl font-medium text-sm hover:bg-slate-100 dark:hover:bg-slate-800 flex items-center gap-3">
+                <i class="fa-solid fa-gamepad text-funky-yellow w-5"></i> Simulasi & Game
+            </button>
+            <button onclick="navigateTo('tentang')" class="w-full text-left px-3 py-2.5 rounded-xl font-medium text-sm hover:bg-slate-100 dark:hover:bg-slate-800 flex items-center gap-3">
+                <i class="fa-solid fa-circle-info text-funky-green w-5"></i> Tentang & Profil
+            </button>
+        </div>
+    </header>
+
+    <!-- MAIN CONTENT CONTAINER -->
+    <main class="flex-grow">
+        <!-- ================= BERANDA SECTION ================= -->
+        <section id="page-beranda" class="page-section transition-opacity duration-300">
+            <!-- Hero Banner -->
+            <div class="relative overflow-hidden bg-gradient-to-b from-brand-50/50 via-slate-50 to-white dark:from-slate-900 dark:via-slate-900 dark:to-slate-950 py-12 md:py-20 px-4 sm:px-6 lg:px-8">
+                <!-- Background decorative shapes -->
+                <div class="absolute -top-24 -left-24 w-96 h-96 bg-brand-500/10 rounded-full blur-3xl pointer-events-none"></div>
+                <div class="absolute top-1/2 -right-24 w-96 h-96 bg-funky-purple/10 rounded-full blur-3xl pointer-events-none"></div>
+
+                <div class="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-12 gap-12 items-center">
+                    <!-- Left Hero Content -->
+                    <div class="lg:col-span-7 space-y-6 text-center lg:text-left">
+                        <div class="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-brand-100 dark:bg-brand-900/40 text-brand-700 dark:text-brand-300 font-semibold text-xs sm:text-sm">
+                            <span class="flex h-2 w-2 rounded-full bg-brand-500 animate-ping"></span>
+                            Modul Interaktif Informatika SMP Kelas 9
+                        </div>
+                        <h1 class="text-4xl sm:text-5xl lg:text-6xl font-extrabold tracking-tight text-slate-900 dark:text-white leading-tight">
+                            BERPIKIR <br class="hidden sm:inline" />
+                            <span class="bg-gradient-to-r from-brand-500 via-funky-purple to-funky-pink bg-clip-text text-transparent">KOMPUTASIONAL</span>
+                        </h1>
+                        <p class="text-lg sm:text-xl text-slate-600 dark:text-slate-300 max-w-2xl mx-auto lg:mx-0 leading-relaxed">
+                            Belajar berpikir logis, kreatif, dan sistematis dalam memecahkan masalah kompleks melalui cara yang seru, visual, dan menyenangkan!
+                        </p>
+                        
+                        <div class="flex flex-col sm:flex-row items-center justify-center lg:justify-start gap-4 pt-4">
+                            <button onclick="navigateTo('materi')" class="w-full sm:w-auto px-8 py-4 rounded-2xl bg-gradient-to-r from-brand-500 to-funky-purple text-white font-bold text-lg shadow-lg shadow-brand-500/25 hover:shadow-brand-500/40 hover:-translate-y-1 active:translate-y-0 transition-all flex items-center justify-center gap-3 group">
+                                🚀 Mulai Belajar Now
+                                <i class="fa-solid fa-arrow-right transition-transform group-hover:translate-x-1"></i>
+                            </button>
+                            <button onclick="navigateTo('game')" class="w-full sm:w-auto px-8 py-4 rounded-2xl bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200 font-bold text-lg border-2 border-slate-200 dark:border-slate-700 hover:border-brand-500 dark:hover:border-brand-500 transition-all flex items-center justify-center gap-3">
+                                🎮 Main Game Logika
+                            </button>
+                        </div>
+
+                        <!-- 4 Pillars Quick Stats -->
+                        <div class="pt-8 grid grid-cols-2 sm:grid-cols-4 gap-3 text-left">
+                            <div class="p-3 rounded-xl bg-white dark:bg-slate-800/80 border border-slate-200/80 dark:border-slate-700 shadow-sm">
+                                <i class="fa-solid fa-puzzle-piece text-brand-500 text-xl mb-1"></i>
+                                <h4 class="font-bold text-xs uppercase text-slate-400">Pilar 1</h4>
+                                <p class="text-sm font-semibold">Dekomposisi</p>
+                            </div>
+                            <div class="p-3 rounded-xl bg-white dark:bg-slate-800/80 border border-slate-200/80 dark:border-slate-700 shadow-sm">
+                                <i class="fa-solid fa-shapes text-funky-purple text-xl mb-1"></i>
+                                <h4 class="font-bold text-xs uppercase text-slate-400">Pilar 2</h4>
+                                <p class="text-sm font-semibold">Pengenalan Pola</p>
+                            </div>
+                            <div class="p-3 rounded-xl bg-white dark:bg-slate-800/80 border border-slate-200/80 dark:border-slate-700 shadow-sm">
+                                <i class="fa-solid fa-filter text-funky-pink text-xl mb-1"></i>
+                                <h4 class="font-bold text-xs uppercase text-slate-400">Pilar 3</h4>
+                                <p class="text-sm font-semibold">Abstraksi</p>
+                            </div>
+                            <div class="p-3 rounded-xl bg-white dark:bg-slate-800/80 border border-slate-200/80 dark:border-slate-700 shadow-sm">
+                                <i class="fa-solid fa-diagram-project text-funky-green text-xl mb-1"></i>
+                                <h4 class="font-bold text-xs uppercase text-slate-400">Pilar 4</h4>
+                                <p class="text-sm font-semibold">Algoritma</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Right Hero Visual / Interactive Showcase -->
+                    <div class="lg:col-span-5 relative flex justify-center">
+                        <div class="relative w-full max-w-md p-6 bg-white dark:bg-slate-800 rounded-3xl shadow-2xl border border-slate-200 dark:border-slate-700 animate-float">
+                            <!-- Header of mockup card -->
+                            <div class="flex items-center justify-between pb-4 border-b border-slate-100 dark:border-slate-700">
+                                <div class="flex items-center space-x-2">
+                                    <div class="w-3 h-3 rounded-full bg-rose-500"></div>
+                                    <div class="w-3 h-3 rounded-full bg-amber-500"></div>
+                                    <div class="w-3 h-3 rounded-full bg-emerald-500"></div>
+                                </div>
+                                <span class="text-xs font-mono text-slate-400">computational_thinking.exe</span>
+                            </div>
+                            
+                            <!-- Graphic Canvas SVG Illustration -->
+                            <div class="py-6 flex justify-center">
+                                <svg class="w-64 h-64" viewBox="0 0 200 200" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                    <!-- Nodes & Graphs -->
+                                    <path d="M40 100 L100 40 L160 100 L100 160 Z" stroke="#8b5cf6" stroke-width="3" stroke-dasharray="4 4"/>
+                                    <circle cx="100" cy="40" r="14" fill="#0284c7"/>
+                                    <circle cx="160" cy="100" r="14" fill="#8b5cf6"/>
+                                    <circle cx="100" cy="160" r="14" fill="#ec4899"/>
+                                    <circle cx="40" cy="100" r="14" fill="#10b981"/>
+                                    <circle cx="100" cy="100" r="18" fill="#f59e0b"/>
+                                    
+                                    <!-- Center Logic Icon -->
+                                    <text x="100" y="105" font-size="14" font-weight="bold" fill="white" text-anchor="middle">CT</text>
+                                    <text x="100" y="44" font-size="10" fill="white" text-anchor="middle">Tree</text>
+                                    <text x="160" y="104" font-size="10" fill="white" text-anchor="middle">Graph</text>
+                                    <text x="100" y="164" font-size="10" fill="white" text-anchor="middle">Pola</text>
+                                    <text x="40" y="104" font-size="8" fill="white" text-anchor="middle">Algo</text>
+
+                                    <!-- Connecting Lines -->
+                                    <line x1="100" y1="54" x2="100" y2="82" stroke="#0284c7" stroke-width="2"/>
+                                    <line x1="146" y1="100" x2="118" y2="100" stroke="#8b5cf6" stroke-width="2"/>
+                                    <line x1="100" y1="146" x2="100" y2="118" stroke="#ec4899" stroke-width="2"/>
+                                    <line x1="54" y1="100" x2="82" y2="100" stroke="#10b981" stroke-width="2"/>
+                                </svg>
+                            </div>
+
+                            <!-- Interactive Teaser Box inside Hero Card -->
+                            <div class="bg-slate-50 dark:bg-slate-900/80 p-4 rounded-2xl border border-slate-200 dark:border-slate-700 text-center">
+                                <p class="text-xs font-semibold text-slate-500 dark:text-slate-400 mb-2">💡 Quick Logic Challenge</p>
+                                <p class="text-sm font-bold mb-3">TRUE AND (FALSE OR TRUE) = ?</p>
+                                <div class="flex justify-center gap-2">
+                                    <button onclick="checkHeroQuiz(true)" class="px-4 py-1.5 rounded-lg bg-emerald-500 hover:bg-emerald-600 text-white font-bold text-xs transition">TRUE</button>
+                                    <button onclick="checkHeroQuiz(false)" class="px-4 py-1.5 rounded-lg bg-rose-500 hover:bg-rose-600 text-white font-bold text-xs transition">FALSE</button>
+                                </div>
+                                <div id="heroQuizFeedback" class="mt-2 text-xs font-semibold hidden"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 3 Main Sections Navigation Cards -->
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
+                <div class="text-center mb-12">
+                    <h2 class="text-3xl font-bold text-slate-900 dark:text-white">Jelajahi Fitur Utama</h2>
+                    <p class="text-slate-600 dark:text-slate-400 mt-2">Pilih bagian yang ingin kamu pelajari hari ini</p>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+                    <!-- Card 1: Materi -->
+                    <div onclick="navigateTo('materi')" class="group cursor-pointer bg-white dark:bg-slate-800 rounded-3xl p-8 border border-slate-200 dark:border-slate-700 shadow-lg hover:shadow-2xl hover:border-brand-500 transition-all duration-300 relative overflow-hidden flex flex-col justify-between">
+                        <div class="absolute -right-8 -bottom-8 w-32 h-32 bg-brand-500/10 rounded-full group-hover:scale-150 transition-transform duration-500"></div>
+                        <div>
+                            <div class="w-16 h-16 rounded-2xl bg-brand-100 dark:bg-brand-900/50 text-brand-600 dark:text-brand-300 flex items-center justify-center text-3xl mb-6 group-hover:scale-110 transition-transform">
+                                📚
+                            </div>
+                            <span class="text-xs font-bold uppercase tracking-wider text-brand-600 dark:text-brand-400">Bagian 1</span>
+                            <h3 class="text-2xl font-bold text-slate-900 dark:text-white mt-1 mb-3">Penjelasan / Materi</h3>
+                            <p class="text-slate-600 dark:text-slate-400 text-sm leading-relaxed mb-6">
+                                Pelajari konsep Pengenalan Pola, Operasi Logika (AND, OR, NOT), Algoritma, Flowchart, serta Struktur Data Tree & Graph.
+                            </p>
+                        </div>
+                        <div class="flex items-center text-brand-600 dark:text-brand-400 font-bold text-sm group-hover:translate-x-2 transition-transform">
+                            Mulai Membaca <i class="fa-solid fa-chevron-right ml-2"></i>
+                        </div>
+                    </div>
+
+                    <!-- Card 2: Galeri Infografis -->
+                    <div onclick="navigateTo('galeri')" class="group cursor-pointer bg-white dark:bg-slate-800 rounded-3xl p-8 border border-slate-200 dark:border-slate-700 shadow-lg hover:shadow-2xl hover:border-funky-pink transition-all duration-300 relative overflow-hidden flex flex-col justify-between">
+                        <div class="absolute -right-8 -bottom-8 w-32 h-32 bg-funky-pink/10 rounded-full group-hover:scale-150 transition-transform duration-500"></div>
+                        <div>
+                            <div class="w-16 h-16 rounded-2xl bg-pink-100 dark:bg-pink-900/50 text-funky-pink flex items-center justify-center text-3xl mb-6 group-hover:scale-110 transition-transform">
+                                🖼️
+                            </div>
+                            <span class="text-xs font-bold uppercase tracking-wider text-funky-pink">Bagian 2</span>
+                            <h3 class="text-2xl font-bold text-slate-900 dark:text-white mt-1 mb-3">Gambar & Infografis</h3>
+                            <p class="text-slate-600 dark:text-slate-400 text-sm leading-relaxed mb-6">
+                                Galeri visual menarik berisi ringkasan, diagram logika, alur flowchart, dan visualisasi visual konsep komputasional.
+                            </p>
+                        </div>
+                        <div class="flex items-center text-funky-pink font-bold text-sm group-hover:translate-x-2 transition-transform">
+                            Buka Galeri <i class="fa-solid fa-chevron-right ml-2"></i>
+                        </div>
+                    </div>
+
+                    <!-- Card 3: Game Interaktif -->
+                    <div onclick="navigateTo('game')" class="group cursor-pointer bg-white dark:bg-slate-800 rounded-3xl p-8 border border-slate-200 dark:border-slate-700 shadow-lg hover:shadow-2xl hover:border-funky-yellow transition-all duration-300 relative overflow-hidden flex flex-col justify-between">
+                        <div class="absolute -right-8 -bottom-8 w-32 h-32 bg-funky-yellow/10 rounded-full group-hover:scale-150 transition-transform duration-500"></div>
+                        <div>
+                            <div class="w-16 h-16 rounded-2xl bg-amber-100 dark:bg-amber-900/50 text-amber-500 flex items-center justify-center text-3xl mb-6 group-hover:scale-110 transition-transform">
+                                🎮
+                            </div>
+                            <span class="text-xs font-bold uppercase tracking-wider text-amber-500">Bagian 3</span>
+                            <h3 class="text-2xl font-bold text-slate-900 dark:text-white mt-1 mb-3">Simulasi & Game</h3>
+                            <p class="text-slate-600 dark:text-slate-400 text-sm leading-relaxed mb-6">
+                                Uji pemahamanmu dengan 4 permainan seru: Tebak Pola, Quiz Logika, Susun Algoritma, dan Simulator Tree & Graph!
+                            </p>
+                        </div>
+                        <div class="flex items-center text-amber-500 font-bold text-sm group-hover:translate-x-2 transition-transform">
+                            Mainkan Sekarang <i class="fa-solid fa-chevron-right ml-2"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+
+        <!-- ================= MATERI SECTION ================= -->
+        <section id="page-materi" class="page-section hidden py-10 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto">
+            <!-- Section Header -->
+            <div class="text-center mb-8">
+                <span class="px-4 py-1.5 rounded-full bg-funky-purple/10 text-funky-purple font-bold text-sm">Modul Pembelajaran</span>
+                <h2 class="text-3xl sm:text-4xl font-extrabold text-slate-900 dark:text-white mt-2">Materi Berpikir Komputasional</h2>
+                <p class="text-slate-600 dark:text-slate-400 max-w-2xl mx-auto mt-2">Pilih topik materi di bawah ini untuk memulai belajar secara terstruktur.</p>
+            </div>
+
+            <!-- Material Sub-Tabs Navigation -->
+            <div class="flex flex-wrap justify-center gap-2 mb-8 bg-slate-200/60 dark:bg-slate-800 p-1.5 rounded-2xl max-w-3xl mx-auto">
+                <button onclick="switchMateriTab('pola')" id="tab-materi-pola" class="materi-tab-btn flex-1 min-w-[140px] py-3 px-4 rounded-xl font-bold text-sm transition-all text-center">
+                    🔍 A. Pengenalan Pola & Logika
+                </button>
+                <button onclick="switchMateriTab('algoritma')" id="tab-materi-algoritma" class="materi-tab-btn flex-1 min-w-[140px] py-3 px-4 rounded-xl font-bold text-sm transition-all text-center">
+                    ⚡ B. Algoritma & Flowchart
+                </button>
+                <button onclick="switchMateriTab('struktur')" id="tab-materi-struktur" class="materi-tab-btn flex-1 min-w-[140px] py-3 px-4 rounded-xl font-bold text-sm transition-all text-center">
+                    🌐 C. Struktur Data (Tree & Graph)
+                </button>
+            </div>
+
+            <!-- MATERI CONTENT BOX -->
+            <div class="bg-white dark:bg-slate-800 rounded-3xl p-6 sm:p-10 border border-slate-200 dark:border-slate-700 shadow-xl">
+                
+                <!-- TAB A: PENGENALAN POLA & LOGIKA -->
+                <div id="materi-content-pola" class="materi-content space-y-8">
+                    <div class="flex items-center gap-4 border-b border-slate-100 dark:border-slate-700 pb-4">
+                        <div class="w-12 h-12 rounded-2xl bg-brand-500 text-white flex items-center justify-center text-2xl font-bold">A</div>
+                        <div>
+                            <h3 class="text-2xl font-bold text-slate-900 dark:text-white">Pengenalan Pola (Pattern Recognition) & Operasi Logika</h3>
+                            <p class="text-sm text-slate-500">Mengenali kesamaan atau keteraturan untuk menyederhanakan masalah.</p>
+                        </div>
+                    </div>
+
+                    <!-- Article Body -->
+                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 items-start">
+                        <div class="space-y-4 text-slate-600 dark:text-slate-300">
+                            <h4 class="text-lg font-bold text-slate-900 dark:text-white flex items-center gap-2">
+                                <i class="fa-solid fa-bullseye text-brand-500"></i> Apa itu Pengenalan Pola?
+                            </h4>
+                            <p class="leading-relaxed">
+                                <strong>Pengenalan Pola</strong> adalah kemampuan untuk menemukan kesamaan, keteraturan, atau tren dalam kumpulan data maupun masalah. 
+                            </p>
+                            <p class="leading-relaxed">
+                                <strong>Fungsi Utama:</strong> Dengan mengenali pola dari masalah masa lalu, kita dapat memprediksi dan menerapkan solusi yang sama untuk masalah baru secara lebih cepat dan efisien.
+                            </p>
+
+                            <div class="bg-brand-50 dark:bg-brand-900/30 p-4 rounded-2xl border-l-4 border-brand-500">
+                                <h5 class="font-bold text-brand-700 dark:text-brand-300 mb-1">💡 Contoh Sehari-hari:</h5>
+                                <ul class="list-disc list-inside text-sm space-y-1">
+                                    <li>Mengenali kemacetan jalan pada jam berangkat sekolah setiap hari Senin.</li>
+                                    <li>Menebak angka berikutnya pada deret pola: <code class="bg-slate-200 dark:bg-slate-700 px-2 py-0.5 rounded font-mono">2, 4, 6, 8, ... (Pola: Tambah 2)</code></li>
+                                    <li>Mengenali ciri-ciri lagu favorit atau jenis genre musik.</li>
+                                </ul>
+                            </div>
+                        </div>
+
+                        <!-- Interactive Truth Table Simulator -->
+                        <div class="bg-slate-50 dark:bg-slate-900 p-6 rounded-2xl border border-slate-200 dark:border-slate-700">
+                            <h4 class="text-lg font-bold text-slate-900 dark:text-white mb-3 flex items-center gap-2">
+                                <i class="fa-solid fa-microchip text-funky-purple"></i> Interaktif: Operasi Logika (Boolean)
+                            </h4>
+                            <p class="text-xs text-slate-500 mb-4">Uji langsung ekspresi logika AND, OR, dan NOT dengan menekan tombol sakelar di bawah!</p>
+
+                            <div class="space-y-4">
+                                <!-- Interactive Switch Inputs -->
+                                <div class="flex items-center justify-around bg-white dark:bg-slate-800 p-3 rounded-xl shadow-sm">
+                                    <div class="text-center">
+                                        <span class="text-xs font-bold block mb-1">Input A</span>
+                                        <button id="logicInputA" onclick="toggleLogicInput('A')" class="px-4 py-2 rounded-xl font-bold text-white bg-emerald-500 hover:bg-emerald-600 transition shadow">TRUE</button>
+                                    </div>
+                                    <div class="text-center">
+                                        <span class="text-xs font-bold block mb-1">Input B</span>
+                                        <button id="logicInputB" onclick="toggleLogicInput('B')" class="px-4 py-2 rounded-xl font-bold text-white bg-rose-500 hover:bg-rose-600 transition shadow">FALSE</button>
+                                    </div>
+                                </div>
+
+                                <!-- Live Results -->
+                                <div class="grid grid-cols-3 gap-2 text-center">
+                                    <div class="p-3 bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700">
+                                        <div class="text-xs text-slate-400 font-bold">A AND B</div>
+                                        <div id="resAND" class="text-base font-extrabold text-rose-500">FALSE</div>
+                                        <div class="text-[10px] text-slate-400">Kedua sakelar harus TRUE</div>
+                                    </div>
+                                    <div class="p-3 bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700">
+                                        <div class="text-xs text-slate-400 font-bold">A OR B</div>
+                                        <div id="resOR" class="text-base font-extrabold text-emerald-500">TRUE</div>
+                                        <div class="text-[10px] text-slate-400">Cukup 1 sakelar TRUE</div>
+                                    </div>
+                                    <div class="p-3 bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700">
+                                        <div class="text-xs text-slate-400 font-bold">NOT A</div>
+                                        <div id="resNOT" class="text-base font-extrabold text-rose-500">FALSE</div>
+                                        <div class="text-[10px] text-slate-400">Kebalikan dari Input A</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Summary Card -->
+                    <div class="bg-gradient-to-r from-brand-500 to-funky-purple p-6 rounded-2xl text-white shadow-md">
+                        <h4 class="font-bold text-lg mb-2 flex items-center gap-2"><i class="fa-solid fa-bookmark"></i> Ringkasan Pengenalan Pola</h4>
+                        <p class="text-sm opacity-90 leading-relaxed">
+                            Pengenalan Pola melatih logika untuk menemukan keteraturan. Operasi Logika (<strong>AND</strong> = harus benar semua, <strong>OR</strong> = salah satu benar cukup, <strong>NOT</strong> = membalikkan nilai) digunakan komputer untuk mengambil keputusan otomatis.
+                        </p>
+                    </div>
+
+                    <!-- Next Step Button -->
+                    <div class="flex justify-between items-center pt-4">
+                        <div></div>
+                        <button onclick="switchMateriTab('algoritma'); markProgress('pola');" class="px-6 py-3 rounded-xl bg-brand-500 hover:bg-brand-600 text-white font-bold transition flex items-center gap-2 shadow-lg">
+                            Lanjut ke B. Algoritma <i class="fa-solid fa-arrow-right"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- TAB B: ALGORITMA & FLOWCHART -->
+                <div id="materi-content-algoritma" class="materi-content hidden space-y-8">
+                    <div class="flex items-center gap-4 border-b border-slate-100 dark:border-slate-700 pb-4">
+                        <div class="w-12 h-12 rounded-2xl bg-funky-purple text-white flex items-center justify-center text-2xl font-bold">B</div>
+                        <div>
+                            <h3 class="text-2xl font-bold text-slate-900 dark:text-white">Algoritma & Pembuatan Flowchart</h3>
+                            <p class="text-sm text-slate-500">Langkah-langkah sistematis dan logis untuk menyelesaikan masalah.</p>
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 items-start">
+                        <div class="space-y-4 text-slate-600 dark:text-slate-300">
+                            <h4 class="text-lg font-bold text-slate-900 dark:text-white flex items-center gap-2">
+                                <i class="fa-solid fa-list-check text-funky-purple"></i> Pengertian & Ciri Algoritma
+                            </h4>
+                            <p class="leading-relaxed">
+                                <strong>Algoritma</strong> adalah urutan langkah-langkah logis dan terstruktur yang disusun secara runtut untuk memecahkan suatu masalah atau menyelesaikan pekerjaan tertentu.
+                            </p>
+                            
+                            <div class="grid grid-cols-2 gap-3 pt-2">
+                                <div class="p-3 bg-purple-50 dark:bg-purple-900/30 rounded-xl border border-purple-200 dark:border-purple-800">
+                                    <span class="font-bold text-xs text-purple-700 dark:text-purple-300 block mb-1">Ciri 1: Bernilai Pasti</span>
+                                    <span class="text-xs">Setiap langkah harus jelas dan tidak menimbulkan makna ganda (ambigu).</span>
+                                </div>
+                                <div class="p-3 bg-purple-50 dark:bg-purple-900/30 rounded-xl border border-purple-200 dark:border-purple-800">
+                                    <span class="font-bold text-xs text-purple-700 dark:text-purple-300 block mb-1">Ciri 2: Ada Awal & Akhir</span>
+                                    <span class="text-xs">Memiliki kondisi awal (input) dan batas akhir (output) setelah langkah selesai.</span>
+                                </div>
+                            </div>
+
+                            <h5 class="font-bold text-slate-800 dark:text-slate-200 pt-2">Contoh Algoritma Sehari-hari: "Membuat Teh Manis Hangat"</h5>
+                            <ol class="list-decimal list-inside space-y-1 text-sm bg-slate-50 dark:bg-slate-900 p-4 rounded-2xl border border-slate-200 dark:border-slate-700 font-mono">
+                                <li>Siapkan gelas, kantong teh, gula, dan air panas.</li>
+                                <li>Masukkan kantong teh ke dalam gelas.</li>
+                                <li>Tuangkan air panas secukupnya.</li>
+                                <li>Tambahkan 2 sendok teh gula pasir.</li>
+                                <li>Aduk hingga gula larut sempurna. Teh siap disajikan!</li>
+                            </ol>
+                        </div>
+
+                        <!-- Interactive Flowchart Showcase -->
+                        <div class="bg-slate-50 dark:bg-slate-900 p-6 rounded-2xl border border-slate-200 dark:border-slate-700 text-center">
+                            <h4 class="text-lg font-bold text-slate-900 dark:text-white mb-2 flex items-center justify-center gap-2">
+                                <i class="fa-solid fa-diagram-project text-funky-pink"></i> Contoh Flowchart Sederhana
+                            </h4>
+                            <p class="text-xs text-slate-500 mb-6">Simbol standar flowchart untuk menggambarkan alur logika:</p>
+
+                            <!-- Flowchart Diagrams -->
+                            <div class="flex flex-col items-center space-y-3 font-sans text-xs">
+                                <!-- Start -->
+                                <div class="px-6 py-2 rounded-full bg-emerald-500 text-white font-bold shadow">
+                                    Mulai (Oval / Terminator)
+                                </div>
+                                <i class="fa-solid fa-arrow-down text-slate-400"></i>
+                                <!-- Input -->
+                                <div class="px-6 py-2 bg-amber-500 text-white font-bold shadow transform -skew-x-12">
+                                    Input: Air & Teh (Jajaran Genjang)
+                                </div>
+                                <i class="fa-solid fa-arrow-down text-slate-400"></i>
+                                <!-- Process -->
+                                <div class="px-6 py-2 bg-brand-500 text-white font-bold shadow rounded-md">
+                                    Proses: Seduh & Aduk (Persegi Panjang)
+                                </div>
+                                <i class="fa-solid fa-arrow-down text-slate-400"></i>
+                                <!-- Decision -->
+                                <div class="w-32 h-16 bg-funky-purple text-white font-bold flex items-center justify-center shadow transform rotate-45 my-2">
+                                    <span class="transform -rotate-45 text-[10px]">Manis Pas? (Belah Ketupat)</span>
+                                </div>
+                                <i class="fa-solid fa-arrow-down text-slate-400"></i>
+                                <!-- End -->
+                                <div class="px-6 py-2 rounded-full bg-rose-500 text-white font-bold shadow">
+                                    Selesai
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Summary Card -->
+                    <div class="bg-gradient-to-r from-funky-purple to-funky-pink p-6 rounded-2xl text-white shadow-md">
+                        <h4 class="font-bold text-lg mb-2 flex items-center gap-2"><i class="fa-solid fa-bookmark"></i> Ringkasan Algoritma</h4>
+                        <p class="text-sm opacity-90 leading-relaxed">
+                            Algoritma adalah resep langkah demi langkah. Flowchart membantu memvisualisasikan alur tersebut menggunakan bentuk geometris khusus seperti Oval (Mulai/Selesai), Persegi Panjang (Proses), dan Belah Ketupat (Keputusan/Decision).
+                        </p>
+                    </div>
+
+                    <div class="flex justify-between items-center pt-4">
+                        <button onclick="switchMateriTab('pola')" class="px-6 py-3 rounded-xl bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-200 font-bold transition flex items-center gap-2">
+                            <i class="fa-solid fa-arrow-left"></i> Kembali
+                        </button>
+                        <button onclick="switchMateriTab('struktur'); markProgress('algoritma');" class="px-6 py-3 rounded-xl bg-funky-purple hover:bg-purple-600 text-white font-bold transition flex items-center gap-2 shadow-lg">
+                            Lanjut ke C. Struktur Data <i class="fa-solid fa-arrow-right"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- TAB C: STRUKTUR DATA -->
+                <div id="materi-content-struktur" class="materi-content hidden space-y-8">
+                    <div class="flex items-center gap-4 border-b border-slate-100 dark:border-slate-700 pb-4">
+                        <div class="w-12 h-12 rounded-2xl bg-funky-pink text-white flex items-center justify-center text-2xl font-bold">C</div>
+                        <div>
+                            <h3 class="text-2xl font-bold text-slate-900 dark:text-white">Struktur Data: Pohon (Tree) & Grafik (Graph)</h3>
+                            <p class="text-sm text-slate-500">Cara mengorganisasi dan menyimpan data di dalam komputer agar dapat digunakan secara efisien.</p>
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                        <!-- Tree Section -->
+                        <div class="bg-slate-50 dark:bg-slate-900 p-6 rounded-2xl border border-slate-200 dark:border-slate-700 flex flex-col justify-between">
+                            <div>
+                                <div class="inline-block px-3 py-1 rounded-full bg-emerald-100 dark:bg-emerald-900/50 text-emerald-700 dark:text-emerald-300 font-bold text-xs mb-3">
+                                    🌳 Structural Concept 1
+                                </div>
+                                <h4 class="text-xl font-bold text-slate-900 dark:text-white mb-2">Pohon (Tree)</h4>
+                                <p class="text-sm text-slate-600 dark:text-slate-300 mb-4 leading-relaxed">
+                                    Struktur data hierarkis (bertingkat) seperti silsilah keluarga atau folder komputer. Memiliki satu <strong>Root (Akar)</strong> utama dan bercabang ke <strong>Child Nodes (Anak)</strong>.
+                                </p>
+                                <ul class="text-xs space-y-1.5 text-slate-500 dark:text-slate-400 mb-6">
+                                    <li>• <strong>Hirarki:</strong> Memiliki hubungan Parent-Child (Orang Tua - Anak).</li>
+                                    <li>• <strong>Tanpa Siklus:</strong> Tidak ada jalur berputar kembali ke atas.</li>
+                                    <li>• <strong>Contoh:</strong> Struktur direktori folder <code class="bg-slate-200 dark:bg-slate-800 px-1 rounded">C:\Users\Dokumen</code></li>
+                                </ul>
+                            </div>
+
+                            <!-- SVG Tree Diagram -->
+                            <div class="bg-white dark:bg-slate-800 p-4 rounded-xl text-center border border-slate-200 dark:border-slate-700">
+                                <svg class="w-full h-40" viewBox="0 0 200 120">
+                                    <!-- Lines -->
+                                    <line x1="100" y1="20" x2="50" y2="60" stroke="#10b981" stroke-width="2"/>
+                                    <line x1="100" y1="20" x2="150" y2="60" stroke="#10b981" stroke-width="2"/>
+                                    <line x1="50" y1="60" x2="25" y2="100" stroke="#10b981" stroke-width="2"/>
+                                    <line x1="50" y1="60" x2="75" y2="100" stroke="#10b981" stroke-width="2"/>
+
+                                    <!-- Nodes -->
+                                    <circle cx="100" cy="20" r="12" fill="#10b981"/>
+                                    <text x="100" y="24" text-anchor="middle" fill="white" font-size="10" font-weight="bold">Root</text>
+
+                                    <circle cx="50" cy="60" r="10" fill="#0284c7"/>
+                                    <text x="50" y="63" text-anchor="middle" fill="white" font-size="8">P1</text>
+
+                                    <circle cx="150" cy="60" r="10" fill="#0284c7"/>
+                                    <text x="150" y="63" text-anchor="middle" fill="white" font-size="8">P2</text>
+
+                                    <circle cx="25" cy="100" r="8" fill="#8b5cf6"/>
+                                    <text x="25" y="102" text-anchor="middle" fill="white" font-size="6">C1</text>
+                                    <circle cx="75" cy="100" r="8" fill="#8b5cf6"/>
+                                    <text x="75" y="102" text-anchor="middle" fill="white" font-size="6">C2</text>
+                                </svg>
+                            </div>
+                        </div>
+
+                        <!-- Graph Section -->
+                        <div class="bg-slate-50 dark:bg-slate-900 p-6 rounded-2xl border border-slate-200 dark:border-slate-700 flex flex-col justify-between">
+                            <div>
+                                <div class="inline-block px-3 py-1 rounded-full bg-cyan-100 dark:bg-cyan-900/50 text-cyan-700 dark:text-cyan-300 font-bold text-xs mb-3">
+                                    🕸️ Structural Concept 2
+                                </div>
+                                <h4 class="text-xl font-bold text-slate-900 dark:text-white mb-2">Grafik (Graph)</h4>
+                                <p class="text-sm text-slate-600 dark:text-slate-300 mb-4 leading-relaxed">
+                                    Struktur data jaring yang terdiri dari kumpulan titik (<strong>Node / Vertex</strong>) dan garis penghubung (<strong>Edge</strong>). Digunakan untuk hubungan bebas tidak bertingkat.
+                                </p>
+                                <ul class="text-xs space-y-1.5 text-slate-500 dark:text-slate-400 mb-6">
+                                    <li>• <strong>Non-Hierarkis:</strong> Bebas terhubung ke mana saja.</li>
+                                    <li>• <strong>Bisa Bersiklus:</strong> Jalur dapat berputar atau saling terhubung balik.</li>
+                                    <li>• <strong>Contoh:</strong> Jaringan teman Facebook / Maps rute lalu lintas.</li>
+                                </ul>
+                            </div>
+
+                            <!-- SVG Graph Diagram -->
+                            <div class="bg-white dark:bg-slate-800 p-4 rounded-xl text-center border border-slate-200 dark:border-slate-700">
+                                <svg class="w-full h-40" viewBox="0 0 200 120">
+                                    <!-- Edges -->
+                                    <line x1="40" y1="30" x2="160" y2="30" stroke="#06b6d4" stroke-width="2"/>
+                                    <line x1="40" y1="30" x2="100" y2="90" stroke="#06b6d4" stroke-width="2"/>
+                                    <line x1="160" y1="30" x2="100" y2="90" stroke="#06b6d4" stroke-width="2"/>
+                                    <line x1="160" y1="30" x2="160" y2="90" stroke="#06b6d4" stroke-width="2"/>
+                                    <line x1="100" y1="90" x2="160" y2="90" stroke="#06b6d4" stroke-width="2"/>
+
+                                    <!-- Nodes -->
+                                    <circle cx="40" cy="30" r="12" fill="#06b6d4"/>
+                                    <text x="40" y="34" text-anchor="middle" fill="white" font-size="9" font-weight="bold">Kota A</text>
+
+                                    <circle cx="160" cy="30" r="12" fill="#06b6d4"/>
+                                    <text x="160" y="34" text-anchor="middle" fill="white" font-size="9" font-weight="bold">Kota B</text>
+
+                                    <circle cx="100" cy="90" r="12" fill="#06b6d4"/>
+                                    <text x="100" y="94" text-anchor="middle" fill="white" font-size="9" font-weight="bold">Kota C</text>
+
+                                    <circle cx="160" cy="90" r="12" fill="#06b6d4"/>
+                                    <text x="160" y="94" text-anchor="middle" fill="white" font-size="9" font-weight="bold">Kota D</text>
+                                </svg>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Summary Card -->
+                    <div class="bg-gradient-to-r from-funky-pink to-brand-500 p-6 rounded-2xl text-white shadow-md">
+                        <h4 class="font-bold text-lg mb-2 flex items-center gap-2"><i class="fa-solid fa-bookmark"></i> Perbedaan Utama Tree vs Graph</h4>
+                        <p class="text-sm opacity-90 leading-relaxed">
+                            <strong>Tree</strong> selalu punya 1 akar utama dan hubungannya menurun bertingkat tanpa siklus mutar. Sedangkan <strong>Graph</strong> melambangkan jaringan bebas interkoneksi yang bisa memiliki banyak siklus.
+                        </p>
+                    </div>
+
+                    <div class="flex justify-between items-center pt-4">
+                        <button onclick="switchMateriTab('algoritma')" class="px-6 py-3 rounded-xl bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-200 font-bold transition flex items-center gap-2">
+                            <i class="fa-solid fa-arrow-left"></i> Kembali
+                        </button>
+                        <button onclick="navigateTo('galeri'); markProgress('struktur');" class="px-6 py-3 rounded-xl bg-gradient-to-r from-brand-500 to-funky-pink text-white font-bold transition flex items-center gap-2 shadow-lg">
+                            Ke Galeri Infografis <i class="fa-solid fa-images"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+
+        <!-- ================= GALERI SECTION ================= -->
+        <section id="page-galeri" class="page-section hidden py-10 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto">
+            <div class="text-center mb-10">
+                <span class="px-4 py-1.5 rounded-full bg-funky-pink/10 text-funky-pink font-bold text-sm">Visual Learning</span>
+                <h2 class="text-3xl sm:text-4xl font-extrabold text-slate-900 dark:text-white mt-2">Galeri Berpikir Komputasional</h2>
+                <p class="text-slate-600 dark:text-slate-400 max-w-2xl mx-auto mt-2">Kumpulan kartu infografis visual untuk membantu pemahaman konsep secara cepat dan intuitif.</p>
+            </div>
+
+            <!-- Gallery Filter Buttons -->
+            <div class="flex flex-wrap justify-center gap-2 mb-8">
+                <button onclick="filterGallery('all')" class="gallery-filter-btn active-filter px-4 py-2 rounded-xl text-xs font-bold transition">Semua Topik</button>
+                <button onclick="filterGallery('pola')" class="gallery-filter-btn px-4 py-2 rounded-xl text-xs font-bold transition bg-slate-200 dark:bg-slate-800">Pengenalan Pola</button>
+                <button onclick="filterGallery('logika')" class="gallery-filter-btn px-4 py-2 rounded-xl text-xs font-bold transition bg-slate-200 dark:bg-slate-800">Operasi Logika</button>
+                <button onclick="filterGallery('algoritma')" class="gallery-filter-btn px-4 py-2 rounded-xl text-xs font-bold transition bg-slate-200 dark:bg-slate-800">Algoritma & Flowchart</button>
+                <button onclick="filterGallery('struktur')" class="gallery-filter-btn px-4 py-2 rounded-xl text-xs font-bold transition bg-slate-200 dark:bg-slate-800">Tree & Graph</button>
+            </div>
+
+            <!-- Gallery Cards Grid -->
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6" id="galleryGrid">
+                
+                <!-- Card 1: 4 Pilar CT -->
+                <div class="gallery-item category-pola bg-white dark:bg-slate-800 rounded-2xl overflow-hidden border border-slate-200 dark:border-slate-700 shadow-lg hover:shadow-2xl transition duration-300 flex flex-col justify-between">
+                    <div class="p-6 bg-gradient-to-br from-brand-500 to-funky-purple text-white relative">
+                        <span class="text-4xl mb-2 block">🧩</span>
+                        <h3 class="font-bold text-xl">4 Pilar Berpikir Komputasional</h3>
+                        <p class="text-xs opacity-80 mt-1">Dekomposisi, Pola, Abstraksi, Algoritma</p>
+                    </div>
+                    <div class="p-5 text-sm space-y-3">
+                        <p class="text-slate-600 dark:text-slate-300">
+                            Empat fondasi berpikir seperti ilmuwan komputer dalam menyelesaikan masalah apa pun.
+                        </p>
+                        <div class="bg-slate-50 dark:bg-slate-900 p-3 rounded-xl text-xs font-mono">
+                            • Dekomposisi: Pecah masalah<br>
+                            • Pola: Cari kesamaan<br>
+                            • Abstraksi: Fokus poin penting<br>
+                            • Algoritma: Susun langkah
+                        </div>
+                    </div>
+                    <div class="p-4 border-t border-slate-100 dark:border-slate-700 flex justify-between items-center text-xs text-slate-400">
+                        <span>Tag: Fondasi Utama</span>
+                        <i class="fa-solid fa-circle-info text-brand-500 text-base"></i>
+                    </div>
+                </div>
+
+                <!-- Card 2: Pengenalan Pola -->
+                <div class="gallery-item category-pola bg-white dark:bg-slate-800 rounded-2xl overflow-hidden border border-slate-200 dark:border-slate-700 shadow-lg hover:shadow-2xl transition duration-300 flex flex-col justify-between">
+                    <div class="p-6 bg-gradient-to-br from-amber-500 to-funky-yellow text-white relative">
+                        <span class="text-4xl mb-2 block">🔍</span>
+                        <h3 class="font-bold text-xl">Deteksi Pola Deret & Tren</h3>
+                        <p class="text-xs opacity-80 mt-1">Pattern Recognition Infographic</p>
+                    </div>
+                    <div class="p-5 text-sm space-y-3">
+                        <p class="text-slate-600 dark:text-slate-300">
+                            Melihat angka/bentuk yang berulang untuk menemukan kaidah matematika dibaliknya.
+                        </p>
+                        <div class="bg-amber-50 dark:bg-amber-900/30 p-3 rounded-xl text-xs font-mono text-amber-800 dark:text-amber-200">
+                            Contoh: 3, 6, 12, 24, [48]<br>
+                            Aturan: Kalikan 2 berturut-turut!
+                        </div>
+                    </div>
+                    <div class="p-4 border-t border-slate-100 dark:border-slate-700 flex justify-between items-center text-xs text-slate-400">
+                        <span>Tag: Pengenalan Pola</span>
+                        <i class="fa-solid fa-shapes text-amber-500 text-base"></i>
+                    </div>
+                </div>
+
+                <!-- Card 3: Operasi Logika Gate -->
+                <div class="gallery-item category-logika bg-white dark:bg-slate-800 rounded-2xl overflow-hidden border border-slate-200 dark:border-slate-700 shadow-lg hover:shadow-2xl transition duration-300 flex flex-col justify-between">
+                    <div class="p-6 bg-gradient-to-br from-emerald-500 to-funky-green text-white relative">
+                        <span class="text-4xl mb-2 block">⚡</span>
+                        <h3 class="font-bold text-xl">Gerbang Logika: AND, OR, NOT</h3>
+                        <p class="text-xs opacity-80 mt-1">Boolean Truth Rules</p>
+                    </div>
+                    <div class="p-5 text-sm space-y-3">
+                        <p class="text-slate-600 dark:text-slate-300">
+                            Logika keputusan dasar yang dipakai pada microchip prosessor komputer.
+                        </p>
+                        <div class="grid grid-cols-3 gap-1 text-[10px] text-center font-mono font-bold">
+                            <div class="bg-emerald-100 dark:bg-emerald-900/40 p-2 rounded text-emerald-700 dark:text-emerald-300">AND<br>T + T = T</div>
+                            <div class="bg-emerald-100 dark:bg-emerald-900/40 p-2 rounded text-emerald-700 dark:text-emerald-300">OR<br>T + F = T</div>
+                            <div class="bg-emerald-100 dark:bg-emerald-900/40 p-2 rounded text-emerald-700 dark:text-emerald-300">NOT<br>!T = F</div>
+                        </div>
+                    </div>
+                    <div class="p-4 border-t border-slate-100 dark:border-slate-700 flex justify-between items-center text-xs text-slate-400">
+                        <span>Tag: Operasi Logika</span>
+                        <i class="fa-solid fa-toggle-on text-emerald-500 text-base"></i>
+                    </div>
+                </div>
+
+                <!-- Card 4: Simbol Flowchart -->
+                <div class="gallery-item category-algoritma bg-white dark:bg-slate-800 rounded-2xl overflow-hidden border border-slate-200 dark:border-slate-700 shadow-lg hover:shadow-2xl transition duration-300 flex flex-col justify-between">
+                    <div class="p-6 bg-gradient-to-br from-cyan-500 to-brand-600 text-white relative">
+                        <span class="text-4xl mb-2 block">📊</span>
+                        <h3 class="font-bold text-xl">Kamus Simbol Flowchart</h3>
+                        <p class="text-xs opacity-80 mt-1">Standard Diagram Notations</p>
+                    </div>
+                    <div class="p-5 text-sm space-y-2 text-slate-600 dark:text-slate-300 text-xs">
+                        <div class="flex items-center gap-2">
+                            <span class="w-12 py-1 bg-emerald-500 text-white rounded-full text-[10px] text-center">Oval</span>
+                            <span>Mulai / Selesai (Terminator)</span>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <span class="w-12 py-1 bg-amber-500 text-white rounded-sm transform -skew-x-12 text-[10px] text-center">Paralel</span>
+                            <span>Input / Output Data</span>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <span class="w-12 py-1 bg-brand-500 text-white rounded text-[10px] text-center">Kotak</span>
+                            <span>Proses Perhitungan / Tindakan</span>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <span class="w-12 py-1 bg-purple-500 text-white text-[10px] text-center">Belah K.</span>
+                            <span>Keputusan Ya / Tidak</span>
+                        </div>
+                    </div>
+                    <div class="p-4 border-t border-slate-100 dark:border-slate-700 flex justify-between items-center text-xs text-slate-400">
+                        <span>Tag: Algoritma</span>
+                        <i class="fa-solid fa-diagram-next text-cyan-500 text-base"></i>
+                    </div>
+                </div>
+
+                <!-- Card 5: Tree Hierarchy -->
+                <div class="gallery-item category-struktur bg-white dark:bg-slate-800 rounded-2xl overflow-hidden border border-slate-200 dark:border-slate-700 shadow-lg hover:shadow-2xl transition duration-300 flex flex-col justify-between">
+                    <div class="p-6 bg-gradient-to-br from-funky-pink to-rose-600 text-white relative">
+                        <span class="text-4xl mb-2 block">🌳</span>
+                        <h3 class="font-bold text-xl">Hierarki Pohon (Tree Data)</h3>
+                        <p class="text-xs opacity-80 mt-1">Root, Parent, Child & Leaf</p>
+                    </div>
+                    <div class="p-5 text-sm space-y-3">
+                        <p class="text-slate-600 dark:text-slate-300">
+                            Setiap elemen memiliki 1 Induk (Parent) dan bisa bercabang ke banyak Anak (Child).
+                        </p>
+                        <div class="bg-rose-50 dark:bg-rose-900/30 p-3 rounded-xl text-xs font-mono text-rose-800 dark:text-rose-200">
+                            Akar (Root) ➔ Cabang (Branch) ➔ Daun (Leaf)
+                        </div>
+                    </div>
+                    <div class="p-4 border-t border-slate-100 dark:border-slate-700 flex justify-between items-center text-xs text-slate-400">
+                        <span>Tag: Struktur Data</span>
+                        <i class="fa-solid fa-sitemap text-rose-500 text-base"></i>
+                    </div>
+                </div>
+
+                <!-- Card 6: Graph Networks -->
+                <div class="gallery-item category-struktur bg-white dark:bg-slate-800 rounded-2xl overflow-hidden border border-slate-200 dark:border-slate-700 shadow-lg hover:shadow-2xl transition duration-300 flex flex-col justify-between">
+                    <div class="p-6 bg-gradient-to-br from-indigo-600 to-funky-purple text-white relative">
+                        <span class="text-4xl mb-2 block">🌐</span>
+                        <h3 class="font-bold text-xl">Jaringan Graf (Graph Data)</h3>
+                        <p class="text-xs opacity-80 mt-1">Vertices & Edges Connections</p>
+                    </div>
+                    <div class="p-5 text-sm space-y-3">
+                        <p class="text-slate-600 dark:text-slate-300">
+                            Visualisasi titik koneksi tanpa batasan hirarki, sangat cocok untuk peta jalan dan jaringan seluler.
+                        </p>
+                        <div class="bg-indigo-50 dark:bg-indigo-900/30 p-3 rounded-xl text-xs font-mono text-indigo-800 dark:text-indigo-200">
+                            Node = Lokasi Tempat<br>
+                            Edge = Jalan Penghubung
+                        </div>
+                    </div>
+                    <div class="p-4 border-t border-slate-100 dark:border-slate-700 flex justify-between items-center text-xs text-slate-400">
+                        <span>Tag: Struktur Data</span>
+                        <i class="fa-solid fa-network-wired text-indigo-500 text-base"></i>
+                    </div>
+                </div>
+
+            </div>
+        </section>
+
+
+        <!-- ================= GAME SECTION ================= -->
+        <section id="page-game" class="page-section hidden py-10 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto">
+            <div class="text-center mb-8">
+                <span class="px-4 py-1.5 rounded-full bg-funky-yellow/20 text-amber-600 dark:text-amber-400 font-bold text-sm">Interactive Playground</span>
+                <h2 class="text-3xl sm:text-4xl font-extrabold text-slate-900 dark:text-white mt-2">Arena Simulasi & Game Logika</h2>
+                <p class="text-slate-600 dark:text-slate-400 max-w-2xl mx-auto mt-2">Mainkan 4 tantangan game di bawah ini untuk mengumpulkan skor total dan membuktikan pemahamanmu!</p>
+            </div>
+
+            <!-- Game Sub-Tabs Selection -->
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-3 max-w-4xl mx-auto mb-8">
+                <button onclick="switchGameTab(1)" id="tab-game-1" class="game-tab-btn bg-white dark:bg-slate-800 p-4 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm font-bold text-sm text-center hover:border-brand-500 transition">
+                    <span class="block text-xl mb-1">🔢</span>
+                    GAME 1: Tebak Pola
+                </button>
+                <button onclick="switchGameTab(2)" id="tab-game-2" class="game-tab-btn bg-white dark:bg-slate-800 p-
